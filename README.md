@@ -1,7 +1,7 @@
 # Python-SC2
 ## Play against a native Blizzard AIs Via Python-SC2 lib by connecting with Starcraft 2 API
 
-Using Dentosal's [A StarCraft II API Client for Python 3](https://github.com/Dentosal/python-sc2) mostly as a learning oppertunity before using the more complex lib of deepmind's [PySC2 - StarCraft II Learning Environment](https://github.com/deepmind/pysc2) 
+Using Dentosal's [A StarCraft II API Client for Python 3](https://github.com/Dentosal/python-sc2) mostly as a learning opportunity before using the more complex lib of deepmind's [PySC2 - StarCraft II Learning Environment](https://github.com/deepmind/pysc2) 
 
 Protoss agent currently gather resources, expand and rush the enemy with constant waves of basic units after setting up a formidable economy
 
