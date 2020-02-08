@@ -40,12 +40,13 @@ class PyAgent(sc2.BotAI):
 
     # basic logic for deciding if economy can support additional production buildings
     def assess_build_limit(self, costMinerals, costVespene):
-        if ((self.minerals - costMinerals) > (costMinerals*2)) and ((self.minerals - costVespene) > (costVespene*2)):
+        if ((self.minerals - costMinerals) > (costMinerals * 2)) and (
+                (self.minerals - costVespene) > (costVespene * 2)):
             return True
         return False
 
     def calc_max_bases(self):
-        return self.iteration / (self.ITERATIONS_PER_MINUTE*2)
+        return self.iteration / (self.ITERATIONS_PER_MINUTE * 2)
 
     # basic logic for deciding who to attack and how to defend
     def find_target(self, state):
@@ -76,15 +77,11 @@ class PyAgent(sc2.BotAI):
                 if nexuses.exists:
                     if self.can_afford(UnitTypeId.PYLON):
                         await self.build(UnitTypeId.PYLON, near=nexuses.first)
-            elif self.supply_left < 1 and not self.MASSPYLONFLAG:
-                self.MASSPYLONFLAG = True
+            if self.supply_left < 1 and self.assess_build_limit(200, 0):
                 nexuses = self.units(UnitTypeId.NEXUS).ready
                 if nexuses.exists:
                     if self.can_afford(UnitTypeId.PYLON):
-                        for x in range(0, 1):
-                            await self.build(UnitTypeId.PYLON, near=nexuses.first)
-                            self.MASSPYLONFLAG = False
-
+                        await self.build(UnitTypeId.PYLON, near=nexuses.first)
 
     async def build_assimilators(self):
         for nexus in self.units(UnitTypeId.NEXUS).ready:
@@ -145,12 +142,13 @@ class PyAgent(sc2.BotAI):
 
     async def attack(self):
         # {UNIT: [n to attacks, n to defend]}
-        aggressive_units = {UnitTypeId.ZEALOT: [25, 4],
-                            UnitTypeId.STALKER: [20, 2],
-                            UnitTypeId.VOIDRAY: [20, 1]}
+        aggressive_units = {UnitTypeId.ZEALOT: [15, 4],
+                            UnitTypeId.STALKER: [15, 2],
+                            UnitTypeId.VOIDRAY: [10, 1]}
 
         for UNIT in aggressive_units:
-            if self.units(UNIT).amount > aggressive_units[UNIT][0] and self.units(UNIT).amount > aggressive_units[UNIT][1]:
+            if self.units(UNIT).amount > aggressive_units[UNIT][0] and self.units(UNIT).amount > \
+                    aggressive_units[UNIT][1]:
                 for UNIT in aggressive_units:
                     for u in self.units(UNIT).idle:
                         await self.do(u.attack(self.find_target(self.state)))
