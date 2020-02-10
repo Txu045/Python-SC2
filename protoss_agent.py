@@ -143,7 +143,7 @@ class PyAgent(sc2.BotAI):
     async def attack(self):
         # {UNIT: [n to attacks, n to defend]}
         aggressive_units = {UnitTypeId.ZEALOT: [15, 4],
-                            UnitTypeId.STALKER: [15, 2],
+                            UnitTypeId.STALKER: [10, 2],
                             UnitTypeId.VOIDRAY: [10, 1]}
 
         for UNIT in aggressive_units:
