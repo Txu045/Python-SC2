@@ -10,7 +10,7 @@ class PyAgent(sc2.BotAI):
     def __init__(self):
         self.ITERATIONS_PER_MINUTE = 165
         self.MAXWORKERSPERBASE = 22
-        self.MAXWORKERS = 70
+        self.MAXWORKERS = 80
         self.MASSPYLONFLAG = False
 
     async def on_step(self, iteration):
@@ -26,6 +26,7 @@ class PyAgent(sc2.BotAI):
         await self.build_gateways()
         await self.build_cyberneticscores()
         await self.build_stargates()
+        await self.build_roboticsfacilities()
 
         # Expand logic
         await self.expand()
@@ -34,6 +35,7 @@ class PyAgent(sc2.BotAI):
         await self.build_zealots()
         await self.build_stalkers()
         await self.build_voidrays()
+        await self.build_immortals()
 
         # attack logic
         await self.attack()
@@ -76,12 +78,12 @@ class PyAgent(sc2.BotAI):
                 nexuses = self.units(UnitTypeId.NEXUS).ready
                 if nexuses.exists:
                     if self.can_afford(UnitTypeId.PYLON):
-                        await self.build(UnitTypeId.PYLON, near=nexuses.first)
+                        await self.build(UnitTypeId.PYLON, near=nexuses.first, max_distance=30)
             if self.supply_left < 1 and self.assess_build_limit(200, 0):
                 nexuses = self.units(UnitTypeId.NEXUS).ready
                 if nexuses.exists:
                     if self.can_afford(UnitTypeId.PYLON):
-                        await self.build(UnitTypeId.PYLON, near=nexuses.first)
+                        await self.build(UnitTypeId.PYLON, near=nexuses.first, max_distance=30)
 
     async def build_assimilators(self):
         for nexus in self.units(UnitTypeId.NEXUS).ready:
@@ -123,6 +125,14 @@ class PyAgent(sc2.BotAI):
                     self.units(UnitTypeId.CYBERNETICSCORE).ready.exists:
                 await self.build(UnitTypeId.STARGATE, near=pylon)
 
+    async def build_roboticsfacilities(self):
+        if self.units(UnitTypeId.PYLON).ready.exists:
+            pylon = self.units(UnitTypeId.PYLON).ready.random
+            canBuild = self.assess_build_limit(150, 150)
+            if canBuild and not self.already_pending(UnitTypeId.ROBOTICSFACILITY) and \
+                    self.units(UnitTypeId.CYBERNETICSCORE).ready.exists:
+                await self.build(UnitTypeId.ROBOTICSFACILITY, near=pylon)
+
     async def build_zealots(self):
         for gateways in self.units(UnitTypeId.GATEWAY).ready.idle:
             if self.can_afford(UnitTypeId.ZEALOT) and self.supply_left > 2 and self.units(UnitTypeId.NEXUS).amount > 1:
@@ -140,11 +150,18 @@ class PyAgent(sc2.BotAI):
                     self.units(UnitTypeId.STARGATE).exists and self.units(UnitTypeId.NEXUS).amount > 2:
                 await self.do(stargates.train(UnitTypeId.VOIDRAY))
 
+    async def build_immortals(self):
+        for roboticsfacilities in self.units(UnitTypeId.ROBOTICSFACILITY).ready.idle:
+            if self.can_afford(UnitTypeId.IMMORTAL) and self.supply_left > 3 and \
+                    self.units(UnitTypeId.ROBOTICSFACILITY).exists and self.units(UnitTypeId.NEXUS).amount > 2:
+                await self.do(roboticsfacilities.train(UnitTypeId.IMMORTAL))
+
     async def attack(self):
         # {UNIT: [n to attacks, n to defend]}
-        aggressive_units = {UnitTypeId.ZEALOT: [15, 4],
-                            UnitTypeId.STALKER: [10, 2],
-                            UnitTypeId.VOIDRAY: [10, 1]}
+        aggressive_units = {UnitTypeId.ZEALOT: [15, 4, 7],
+                            UnitTypeId.STALKER: [10, 2, 7],
+                            UnitTypeId.VOIDRAY: [10, 1, 4],
+                            UnitTypeId.IMMORTAL: [10, 1, 4]}
 
         for UNIT in aggressive_units:
             if self.units(UNIT).amount > aggressive_units[UNIT][0] and self.units(UNIT).amount > \
@@ -158,8 +175,12 @@ class PyAgent(sc2.BotAI):
                     for u in self.units(UNIT).idle:
                         await self.do(u.attack(random.choice(self.known_enemy_units)))
 
+            elif self.units(UNIT).amount > aggressive_units[UNIT][2]:
+                for u in self.units(UNIT).ready:
+                    await self.do(u.attack(self.start_location))
+
 
 run_game(maps.get("AbyssalReefLE"), [
     Bot(Race.Protoss, PyAgent()),
-    Computer(Race.Zerg, Difficulty.Hard)
+    Computer(Race.Terran, Difficulty.Hard)
 ], realtime=False)
